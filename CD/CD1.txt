@@ -1,0 +1,65 @@
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int main()
+{
+    string input;
+
+    // List of supported operators
+    vector<string> operators = {
+        "++", "--", "==", "!=", "<=", ">=",
+        "&&", "||", "+=", "-=", "*=", "/=",
+        "%=", "=", "+", "-", "*", "/", "%",
+        "<", ">", "!", "&", "|"
+    };
+
+    // Accept expression from user
+    cout << "Enter an expression: ";
+    getline(cin, input);
+
+    cout << "\nRecognized operators:\n";
+
+    bool found = false;
+    int i = 0;
+
+    // Scan the input expression character by character
+    while (i < static_cast<int>(input.length()))
+    {
+        bool matched = false;
+
+        // Compare input with each operator
+        for (const string& op : operators)
+        {
+            if (input.compare(i, op.length(), op) == 0)
+            {
+                cout << op << endl;
+
+                // Move index forward by operator length
+                i += static_cast<int>(op.length());
+
+                matched = true;
+                found = true;
+
+                break;
+            }
+        }
+
+        // Move to the next character if no operator matches
+        if (!matched)
+        {
+            i++;
+        }
+    }
+
+    // Display message if no operator is found
+    if (!found)
+    {
+        cout << "No operators found.\n";
+    }
+
+    return 0;
+}

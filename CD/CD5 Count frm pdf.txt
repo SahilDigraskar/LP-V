@@ -1,0 +1,89 @@
+comments.l
+
+
+%{
+#include <stdio.h>
+
+int line_comments = 0;
+int block_comments = 0;
+%}
+
+%x COMMENT
+
+%%
+
+\"([^\\\"\n]|\\.)*\"       { ECHO; }
+
+\'([^\\\'\n]|\\.)*\'       { ECHO; }
+
+"//"[^\n]*                  { line_comments++; }
+
+"/*"                        {
+                                block_comments++;
+                                BEGIN(COMMENT);
+                            }
+
+<COMMENT>"*/"               {
+                                BEGIN(INITIAL);
+                            }
+
+<COMMENT>\n                 { ECHO; }
+
+<COMMENT>.                  ;
+
+<COMMENT><<EOF>>            {
+                                fprintf(stderr,
+                                "Warning: unterminated block comment\n");
+                                return 0;
+                            }
+
+\n                          { ECHO; }
+
+.                           { ECHO; }
+
+%%
+
+int yywrap(void)
+{
+    return 1;
+}
+
+int main(void)
+{
+    printf("Enter source code; finish with EOF:\n");
+
+    yylex();
+
+    fprintf(stderr, "\nLine comments removed: %d\n",
+            line_comments);
+
+    fprintf(stderr, "Block comments removed: %d\n",
+            block_comments);
+
+    return 0;
+}
+
+run
+
+flex comments.l
+gcc lex.yy.c -o comments -lfl
+
+
+input.c--- new file
+
+#include <stdio.h>
+
+int main()
+{
+    int a = 5; // value
+
+    /* block comment */
+    int b = 2;
+
+    printf("Hello World");
+
+    return 0;
+}
+
+
+./comments < input.c

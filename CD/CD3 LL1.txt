@@ -1,0 +1,106 @@
+
+import java.util.*;
+
+public class LL1Parser {
+
+    static Map<String, Map<String, String>> table = new HashMap<>();
+
+    static void add(String nonTerminal, String terminal, String production) {
+        table.putIfAbsent(nonTerminal, new HashMap<>());
+        table.get(nonTerminal).put(terminal, production);
+    }
+
+    public static void main(String[] args) {
+
+        // Grammar:
+        // E -> TQ
+        // Q -> +TQ | epsilon
+        // T -> FR
+        // R -> *FR | epsilon
+        // F -> (E) | i
+
+        add("E", "i", "TQ");
+        add("E", "(", "TQ");
+
+        add("Q", "+", "+TQ");
+        add("Q", ")", "ε");
+        add("Q", "$", "ε");
+
+        add("T", "i", "FR");
+        add("T", "(", "FR");
+
+        add("R", "*", "*FR");
+        add("R", "+", "ε");
+        add("R", ")", "ε");
+        add("R", "$", "ε");
+
+        add("F", "i", "i");
+        add("F", "(", "(E)");
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter input string (use i for identifier): ");
+        String input = sc.nextLine().replaceAll("\\s+", "") + "$";
+
+        Stack<String> stack = new Stack<>();
+        stack.push("$");
+        stack.push("E");
+
+        int index = 0;
+
+        System.out.println("\nStack\t\tInput\t\tAction");
+
+        while (!stack.isEmpty() && index < input.length()) {
+
+            String top = stack.peek();
+            String current = String.valueOf(input.charAt(index));
+
+            System.out.print(stack + "\t\t" + input.substring(index) + "\t\t");
+
+            if (top.equals("$") && current.equals("$")) {
+                System.out.println("String Accepted");
+                sc.close();
+                return;
+            }
+
+            if (!table.containsKey(top)) {
+
+                if (top.equals(current)) {
+                    stack.pop();
+                    index++;
+
+                    System.out.println("Match " + current);
+
+                } else {
+                    System.out.println("String Rejected");
+                    sc.close();
+                    return;
+                }
+
+            } else {
+
+                String production = table.get(top).get(current);
+
+                if (production == null) {
+                    System.out.println("String Rejected");
+                    sc.close();
+                    return;
+                }
+
+                stack.pop();
+
+                if (!production.equals("ε")) {
+
+                    for (int i = production.length() - 1; i >= 0; i--) {
+                        stack.push(String.valueOf(production.charAt(i)));
+                    }
+                }
+
+                System.out.println(top + " -> " + production);
+            }
+        }
+
+        System.out.println("String Rejected");
+        sc.close();
+    }
+}

@@ -1,0 +1,109 @@
+expression.l- Lex Program
+
+C
+
+%{
+#include "y.tab.h"
+#include <stdlib.h>
+%}
+
+%%
+
+[0-9]+(\.[0-9]+)?  { yylval.value = atof(yytext); return NUMBER; }
+[ \t\r]+            ;
+\n                  return '\n';
+[()+*/-]            return yytext[0];
+.                   return yytext[0];
+
+%%
+
+int yywrap(void)
+{
+    return 1;
+}
+
+expression.y - Yacc program
+
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+int yylex(void);
+void yyerror(const char *s);
+%}
+
+%union {
+    double value;
+}
+
+%token <value> NUMBER
+%type <value> expr
+
+%left '+' '-'
+%left '*' '/'
+%left UMINUS
+
+%%
+
+input:
+      expr '\n' {
+          printf("Valid expression. Result = %.2f\n", $1);
+      }
+    | expr {
+          printf("Valid expression. Result = %.2f\n", $1);
+      }
+    ;
+
+expr:
+      NUMBER {
+          $$ = $1;
+      }
+    | expr '+' expr {
+          $$ = $1 + $3;
+      }
+    | expr '-' expr {
+          $$ = $1 - $3;
+      }
+    | expr '*' expr {
+          $$ = $1 * $3;
+      }
+    | expr '/' expr {
+          if ($3 == 0) {
+              yyerror("division by zero");
+              YYERROR;
+          }
+          $$ = $1 / $3;
+      }
+    | '-' expr %prec UMINUS {
+          $$ = -$2;
+      }
+    | '(' expr ')' {
+          $$ = $2;
+      }
+    ;
+
+%%
+
+void yyerror(const char *s)
+{
+    printf("Invalid expression: %s\n", s);
+}
+
+int main(void)
+{
+    printf("Enter an arithmetic expression: ");
+    yyparse();
+    return 0;
+}
+
+
+how to run
+
+bison -dy expression.y
+
+flex expression.l
+
+gcc y.tab.c lex.yy.c -o expression -lfl
+
+./expression
